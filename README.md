@@ -150,9 +150,7 @@ The design agent signs in to Canva over OAuth.
 3. The token is saved to MongoDB, so other machines and deployed servers reuse it without opening a browser. Without Mongo it is saved to `backend/.canva_tokens.json` (git-ignored) and each machine has to sign in separately.
 4. If the token is revoked, repeat step 1.
 
-Designs are built from a text prompt each time, so visuals are only as consistent as the prompt keeps them. Autofilling a saved brand template needs Canva Enterprise.
 
-The exported image link from Canva expires after roughly 18 hours. The `design_id` and edit link do not.
 
 ## API
 
@@ -170,26 +168,7 @@ The exported image link from Canva expires after roughly 18 hours. The `design_i
 
 The UI uses `/api/chat`, the three `/api/chat/*` routes, `/api/review` and `/api/plan/export`. `/api/generate`, `/api/repurpose` and `/api/plan` skip the orchestrator and call one agent each, which is handy for testing.
 
-## Making it your own
 
-Everything brand-specific is in two files, so you can point this at a different company without touching the code:
-
-- `brand_voice.md`: tone, vocabulary rules, audiences, content pillars, channel rules, compliance guardrails. Every agent reads it on every call.
-- `product.pdf`: product facts and status (live, shipping, planned). Optional. If it is missing or unreadable, agents fall back to `brand_voice.md` alone. Email addresses in it are redacted before they reach the model.
-
-Other places that hold company-specific values: the channel list and ICPs in `planner.py`, the channel limits in `generator.py`, and the Canva dimensions in `designer.py` (`CHANNEL_SPECS`).
-
-## Tracing
-
-Optional LangSmith tracing is off by default. Set `LANGSMITH_TRACING=true` and a `LANGSMITH_API_KEY` to turn it on. It records one span per Gemini call. Prompts and drafts are sent to LangSmith when it is on. Canva steps are not traced, so check the terminal for those errors.
-
-## Known limitations
-
-- No authentication. Anyone who can reach the server can use it and spend your Gemini and Canva quota.
-- `app.py` runs Flask in debug mode on port 5000. Put it behind a production server such as gunicorn before deploying.
-- Session storage ignores write errors on purpose, so a Mongo outage fails quietly rather than breaking a turn.
-- Canva edits change text only. Requests to change colors, imagery or layout are not supported.
-- The calendar planner caps X (Twitter) at 2-3 substantive slots a week by design.
 
 ## Tech stack
 
